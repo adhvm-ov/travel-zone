@@ -9,22 +9,17 @@ function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // استخدام رابط السيرفر المرفوع على Vercel ومسار /login
+        // تأكد من الرابط الصحيح للسيرفر
         axios.post('https://travel-zone-seven.vercel.app/login', { email, password })
         .then(res => {
             if (res.data.message === "Success") {
-                // حفظ بيانات المستخدم في المتصفح
                 localStorage.setItem("user", JSON.stringify(res.data.user));
-                // التوجه لصفحة لوحة التحكم
                 navigate('/dashboard'); 
-            } else {
-                alert("الايميل أو كلمة السر غلط يا أدهم!");
             }
         })
         .catch(err => {
-            console.error("Login Error:", err);
-            alert("مشكلة في السيرفر، تأكد إن الايميل موجود في HeidiSQL");
+            console.error(err);
+            alert("فشل تسجيل الدخول: " + (err.response?.data?.message || "خطأ في الاتصال"));
         });
     };
 
@@ -32,23 +27,9 @@ function Login() {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1a202c' }}>
             <form onSubmit={handleSubmit} style={{ background: '#2d3748', padding: '2rem', borderRadius: '8px', width: '300px' }}>
                 <h2 style={{ color: 'white', textAlign: 'center' }}>منطقة السفر</h2>
-                <input 
-                    type="email" 
-                    placeholder="الايميل" 
-                    style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-                    onChange={e => setEmail(e.target.value)} 
-                    required 
-                />
-                <input 
-                    type="password" 
-                    placeholder="كلمة السر" 
-                    style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-                    onChange={e => setPassword(e.target.value)} 
-                    required 
-                />
-                <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#00b5d8', color: 'white', border: 'none', cursor: 'pointer' }}>
-                    تسجيل الدخول
-                </button>
+                <input type="email" placeholder="الايميل" style={{ width: '100%', marginBottom: '10px', padding: '10px' }} onChange={e => setEmail(e.target.value)} required />
+                <input type="password" placeholder="كلمة السر" style={{ width: '100%', marginBottom: '20px', padding: '10px' }} onChange={e => setPassword(e.target.value)} required />
+                <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#00b5d8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>تسجيل الدخول</button>
             </form>
         </div>
     );

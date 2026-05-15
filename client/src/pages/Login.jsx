@@ -1,57 +1,57 @@
-import { useState } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-export default function Login() {
-  const navigate = useNavigate()
+function Login() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        // استخدام رابط السيرفر المرفوع على Vercel ومسار /login
+        axios.post('https://travel-zone-seven.vercel.app/login', { email, password })
+        .then(res => {
+            if (res.data.message === "Success") {
+                // حفظ بيانات المستخدم في المتصفح
+                localStorage.setItem("user", JSON.stringify(res.data.user));
+                // التوجه لصفحة لوحة التحكم
+                navigate('/dashboard'); 
+            } else {
+                alert("الايميل أو كلمة السر غلط يا أدهم!");
+            }
+        })
+        .catch(err => {
+            console.error("Login Error:", err);
+            alert("مشكلة في السيرفر، تأكد إن الايميل موجود في HeidiSQL");
+        });
+    };
 
-  const login = async () => {
-    try {
-      const res = await axios.post('https://travel-zone-seven.vercel.app/login', {
-        email,
-        password,
-      })
-
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
-
-      navigate('/dashboard')
-    } catch (err) {
-      alert('Login Failed')
-    }
-  }
-
-  return (
-    <div className="h-screen flex items-center justify-center bg-slate-900">
-      <div className="bg-slate-800 p-10 rounded-2xl w-[400px]">
-        <h1 className="text-3xl font-bold mb-6 text-center">
-          Travel Zone
-        </h1>
-
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-3 rounded-lg mb-4 text-black"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-3 rounded-lg mb-4 text-black"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          onClick={login}
-          className="w-full bg-cyan-500 p-3 rounded-lg font-bold"
-        >
-          Login
-        </button>
-      </div>
-    </div>
-  )
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1a202c' }}>
+            <form onSubmit={handleSubmit} style={{ background: '#2d3748', padding: '2rem', borderRadius: '8px', width: '300px' }}>
+                <h2 style={{ color: 'white', textAlign: 'center' }}>منطقة السفر</h2>
+                <input 
+                    type="email" 
+                    placeholder="الايميل" 
+                    style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                    onChange={e => setEmail(e.target.value)} 
+                    required 
+                />
+                <input 
+                    type="password" 
+                    placeholder="كلمة السر" 
+                    style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
+                    onChange={e => setPassword(e.target.value)} 
+                    required 
+                />
+                <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#00b5d8', color: 'white', border: 'none', cursor: 'pointer' }}>
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    );
 }
+
+export default Login;

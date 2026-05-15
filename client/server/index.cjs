@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// إعداد رفع الملفات
+// إعداد مجلد رفع الصور (الإيصالات)
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, cb) => {
@@ -18,15 +18,38 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ملاحظة: لما نرفع الداتا بيز أونلاين هنغير البيانات دي بالبيانات الجديدة
+// --- بيانات الربط بقاعدة بيانات Aiven (أونلاين) ---
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'travel_zone',
+  host: 'mysql-36b9e26a-travel-zone.c.aivencloud.com',
+  port: 14600,
+  user: 'avnadmin',
+  password: 'AVNS_PrEWATHYYWJGUkrICPi',
+  database: 'defaultdb',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-// المسارات (Routes) كما هي
+db.connect(err => {
+  if (err) {
+    console.error("❌ خطأ في الاتصال بالسحابة:", err);
+  } else {
+    console.log("✅ متصل بقاعدة بيانات Aiven بنجاح!");
+  }
+});
+
+// --- المسارات (العمليات) ---
+
+// 1. تسجيل الدخول
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  db.query("SELECT * FROM employees WHERE email = ? AND password = ?", [email, password], (err, data) => {
+    if (data && data.length > 0) res.json({ message: "Success", user: data[0] });
+    else res.status(401).json({ message: "Failed" });
+  });
+});
+
+// 2. إضافة عميل ورحلة مع إيصال
 app.post('/add-customer', upload.single('receipt'), (req, res) => {
   const { name, phone, destination, price } = req.body;
   const receipt_img = req.file ? req.file.filename : null;
@@ -37,12 +60,23 @@ app.post('/add-customer', upload.single('receipt'), (req, res) => {
   });
 });
 
+// 3. جلب قائمة العملاء
 app.get('/customers', (req, res) => {
-  db.query("SELECT * FROM customers ORDER BY id DESC", (err, result) => res.json(result));
+  db.query("SELECT * FROM customers ORDER BY id DESC", (err, data) => {
+    if (err) return res.status(500).json(err);
+    res.json(data);
+  });
 });
 
-// البورت المرن للاستضافة
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// 4. تسجيل الحضور
+app.post('/attendance/check-in', (req, res) => {
+  const { employee_id } = req.body;
+  db.query("INSERT INTO attendance (employee_id, check_in, date) VALUES (?, NOW(), CURDATE())", [employee_id], (err) => {
+    if (err) return res.status(500).json(err);
+    res.json({ message: "Success" });
+  });
 });
+
+// تشغيل السيرفر على بورت مرن (للاستضافة)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 السيرفر شغال على بورت ${PORT}`));

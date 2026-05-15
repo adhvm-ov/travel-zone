@@ -12,7 +12,7 @@ export default function Dashboard() {
   }, []);
 
   const fetchCustomers = async () => {
-    const res = await axios.get('http://localhost:5000/customers');
+    const res = await axios.get('https://travel-zone-seven.vercel.app/customers');
     setCustomers(res.data);
   };
 
@@ -25,7 +25,7 @@ export default function Dashboard() {
     if (file) formData.append('receipt', file);
 
     try {
-      await axios.post('http://localhost:5000/add-customer', formData);
+      await axios.post('https://travel-zone-seven.vercel.app/customers', formData);
       alert('تمت إضافة العميل بنجاح ✅');
       fetchCustomers();
       setForm({ name: '', phone: '', destination: '', price: '' });
@@ -75,7 +75,7 @@ export default function Dashboard() {
                 <td className="p-4 text-slate-300">{c.notes}</td>
                 <td className="p-4 text-green-400 font-bold">{c.trip_price} ج.م</td>
                 <td className="p-4 text-cyan-400">
-                  {c.receipt_img && <a href={`http://localhost:5000/uploads/${c.receipt_img}`} target="_blank" rel="noreferrer">عرض 🖼️</a>}
+                  {c.receipt_img && <a href={'https://travel-zone-seven.vercel.app/customers'} target="_blank" rel="noreferrer">عرض 🖼️</a>}
                 </td>
               </tr>
             ))}

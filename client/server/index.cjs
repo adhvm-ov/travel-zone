@@ -3,22 +3,29 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
 
-// إعداد مجلد رفع الصور (الإيصالات)
+// حل مشكلة الـ uploads في Vercel: استخدام المجلد المؤقت /tmp
+const uploadDir = '/tmp/uploads';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadDir));
+
+// إعداد Multer للتخزين المؤقت
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: uploadDir,
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 const upload = multer({ storage });
 
-// --- بيانات الربط بقاعدة بيانات Aiven (أونلاين) ---
+// --- الربط بقاعدة بيانات Aiven أونلاين بناءً على بياناتك ---
 const db = mysql.createConnection({
   host: 'mysql-36b9e26a-travel-zone.c.aivencloud.com',
   port: 14600,
@@ -32,24 +39,25 @@ const db = mysql.createConnection({
 
 db.connect(err => {
   if (err) {
-    console.error("❌ خطأ في الاتصال بالسحابة:", err);
+    console.error("❌ خطأ في الاتصال بـ Aiven:", err);
   } else {
-    console.log("✅ متصل بقاعدة بيانات Aiven بنجاح!");
+    console.log("✅ متصل بنجاح بسحابة Aiven!");
   }
 });
 
-// --- المسارات (العمليات) ---
+// --- المسارات (Routes) ---
 
 // 1. تسجيل الدخول
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   db.query("SELECT * FROM employees WHERE email = ? AND password = ?", [email, password], (err, data) => {
+    if (err) return res.status(500).json(err);
     if (data && data.length > 0) res.json({ message: "Success", user: data[0] });
     else res.status(401).json({ message: "Failed" });
   });
 });
 
-// 2. إضافة عميل ورحلة مع إيصال
+// 2. إضافة عميل
 app.post('/add-customer', upload.single('receipt'), (req, res) => {
   const { name, phone, destination, price } = req.body;
   const receipt_img = req.file ? req.file.filename : null;
@@ -77,6 +85,10 @@ app.post('/attendance/check-in', (req, res) => {
   });
 });
 
-// تشغيل السيرفر على بورت مرن (للاستضافة)
+// رسالة ترحيب عند فتح رابط السيرفر
+app.get('/', (req, res) => {
+    res.send("Travel Zone API is running on Vercel... 🚀");
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 السيرفر شغال على بورت ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));

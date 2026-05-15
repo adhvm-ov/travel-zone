@@ -10,7 +10,7 @@ export default function Login() {
 
   const login = async () => {
     try {
-      const res = await axios.post('https://travel-zone-seven.vercel.app/customers', {
+      const res = await axios.post('https://travel-zone-seven.vercel.app/login', {
         email,
         password,
       })
